@@ -264,10 +264,6 @@ function DecodedTransaction({ raw }: { raw: string }) {
 					<FileCode2 className="size-4 text-primary" />
 					Decoded transaction
 				</CardTitle>
-				<p className="text-xs text-muted-foreground">
-					Structured view from the WASM ledger (
-					<code className="font-mono">@midnight-ntwrk/ledger-v8</code>).
-				</p>
 			</CardHeader>
 			<CardContent>
 				{isPending ? (
