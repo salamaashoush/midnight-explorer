@@ -1,21 +1,16 @@
 import { queryOptions } from "@tanstack/react-query";
-
-// Midnight Preview testnet indexer. `/api/v3` is an alias of `/api/v4`.
-// CORS is open (`access-control-allow-origin: *`), so the browser can
-// query it directly — no server proxy needed.
-export const INDEXER_HTTP =
-	"https://indexer.preview.midnight.network/api/v3/graphql";
-export const INDEXER_WS =
-	"wss://indexer.preview.midnight.network/api/v3/graphql/ws";
-export const NETWORK = "Preview";
+import { activeNetwork } from "./networks";
 
 type GqlResponse<T> = { data?: T; errors?: { message: string }[] };
 
+// The indexer `/api/v3` GraphQL endpoint of the active network. CORS
+// is open (`access-control-allow-origin: *`), so the browser queries
+// it directly — no server proxy needed.
 async function gql<T>(
 	query: string,
 	variables?: Record<string, unknown>,
 ): Promise<T> {
-	const res = await fetch(INDEXER_HTTP, {
+	const res = await fetch(activeNetwork().indexerHttp, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ query, variables }),
@@ -210,26 +205,26 @@ export async function fetchContract(
 
 export const latestBlocksQuery = (depth = 15) =>
 	queryOptions({
-		queryKey: ["latest-blocks", depth],
+		queryKey: ["latest-blocks", activeNetwork().id, depth],
 		queryFn: () => fetchLatestBlocks(depth),
 		refetchInterval: 6_000,
 	});
 
 export const blockQuery = (id: string) =>
 	queryOptions({
-		queryKey: ["block", id],
+		queryKey: ["block", activeNetwork().id, id],
 		queryFn: () => fetchBlock(id),
 	});
 
 export const txQuery = (hash: string) =>
 	queryOptions({
-		queryKey: ["tx", hash],
+		queryKey: ["tx", activeNetwork().id, hash],
 		queryFn: () => fetchTransaction(hash),
 	});
 
 export const contractQuery = (address: string) =>
 	queryOptions({
-		queryKey: ["contract", address],
+		queryKey: ["contract", activeNetwork().id, address],
 		queryFn: () => fetchContract(address),
 	});
 
@@ -276,7 +271,7 @@ export async function fetchNetwork(): Promise<NetworkInfo> {
 
 export const networkQuery = () =>
 	queryOptions({
-		queryKey: ["network"],
+		queryKey: ["network", activeNetwork().id],
 		queryFn: fetchNetwork,
 		refetchInterval: 30_000,
 	});

@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "graphql-ws";
 import { useEffect, useState } from "react";
-import { type Block, INDEXER_WS, latestBlocksQuery } from "./indexer";
+import { type Block, latestBlocksQuery } from "./indexer";
+import { activeNetwork } from "./networks";
 
 const BLOCKS_SUBSCRIPTION = `
   subscription {
@@ -23,7 +24,7 @@ export function useLiveBlocks(count = 20): boolean {
 	const [connected, setConnected] = useState(false);
 
 	useEffect(() => {
-		const client = createClient({ url: INDEXER_WS });
+		const client = createClient({ url: activeNetwork().indexerWs });
 		const key = latestBlocksQuery(count).queryKey;
 
 		const unsubscribe = client.subscribe<{ blocks: Block }>(

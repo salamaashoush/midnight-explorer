@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { INDEXER_HTTP, INDEXER_WS } from "./indexer";
+import { activeNetwork } from "./networks";
 
 export interface DecodedContractState {
 	/** Circuit entry points exposed by the contract. */
@@ -18,7 +18,8 @@ export const getContractState = createServerFn({ method: "GET" })
 		const { indexerPublicDataProvider } = await import(
 			"@midnight-ntwrk/midnight-js-indexer-public-data-provider"
 		);
-		const provider = indexerPublicDataProvider(INDEXER_HTTP, INDEXER_WS);
+		const net = activeNetwork();
+		const provider = indexerPublicDataProvider(net.indexerHttp, net.indexerWs);
 		const state = await provider.queryContractState(address);
 		if (!state) return null;
 

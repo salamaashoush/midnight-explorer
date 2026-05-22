@@ -13,6 +13,9 @@ state.
 
 ## Features
 
+- **Networks** — switch between **Preview**, **Preprod**, and a
+  **Local** node (`localhost:8088`) from the header; the choice is
+  cookie-backed so SSR and every query resolve against it.
 - **Live block feed** — new blocks stream in over a `graphql-ws`
   WebSocket subscription to the indexer.
 - **Blocks** — latest blocks, per-block transaction lists, prev/next
@@ -40,10 +43,12 @@ TanStack Start **server functions** rather than the browser bundle.
 
 ## Data source
 
-The Midnight Preview indexer GraphQL API:
+The Midnight indexer GraphQL API. The active network is chosen in the
+header (default Preview):
 
-- HTTP — `https://indexer.preview.midnight.network/api/v3/graphql`
-- WebSocket — `wss://indexer.preview.midnight.network/api/v3/graphql/ws`
+- Preview — `https://indexer.preview.midnight.network/api/v3/graphql`
+- Preprod — `https://indexer.preprod.midnight.network/api/v3/graphql`
+- Local — `http://localhost:8088/api/v3/graphql`
 
 ## Development
 

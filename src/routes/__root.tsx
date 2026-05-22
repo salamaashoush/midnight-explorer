@@ -8,10 +8,10 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Moon } from "lucide-react";
+import { NetworkSwitcher } from "../components/network-switcher";
 import { SearchBox } from "../components/search-box";
 import { TooltipProvider } from "../components/ui/tooltip";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-import { NETWORK } from "../lib/indexer";
 import appCss from "../styles.css?url";
 
 interface MyRouterContext {
@@ -26,7 +26,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			{ title: "Midnight Explorer" },
 			{
 				name: "description",
-				content: `Block & transaction explorer for the Midnight ${NETWORK} network.`,
+				content: "Block & transaction explorer for the Midnight network.",
 			},
 		],
 		links: [{ rel: "stylesheet", href: appCss }],
@@ -64,16 +64,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 								<span className="text-base font-semibold tracking-tight">
 									Midnight Explorer
 								</span>
-								<span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-									{NETWORK}
-								</span>
 							</Link>
 							<nav className="flex items-center gap-1">
 								<NavItem to="/">Blocks</NavItem>
 								<NavItem to="/network">Network</NavItem>
 							</nav>
-							<div className="sm:ml-auto sm:max-w-xl sm:flex-1">
+							<div className="flex items-center gap-2 sm:ml-auto sm:max-w-2xl sm:flex-1">
 								<SearchBox />
+								<NetworkSwitcher />
 							</div>
 						</div>
 					</header>
@@ -81,8 +79,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					<main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
 
 					<footer className="mx-auto max-w-6xl px-4 pb-10 text-xs text-muted-foreground">
-						Data from the Midnight {NETWORK} indexer. Shielded transaction
-						sender / receiver / amounts are private by design and not shown.
+						Data from the Midnight indexer. Shielded transaction sender /
+						receiver / amounts are private by design and not shown.
 					</footer>
 				</TooltipProvider>
 
