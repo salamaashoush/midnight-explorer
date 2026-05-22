@@ -46,17 +46,57 @@ export const getContractState = createServerFn({ method: "GET" })
 	});
 
 export interface DecodedTx {
-	identifiers: string[];
-	intentCount: number;
-	hasGuaranteedOffer: boolean;
-	hasFallibleOffer: boolean;
 	repr: string;
 }
 
+// Re-indents the ledger's flat `toString` (a Rust `Debug` rendering)
+// into a readable tree: `{` / `[` open a block, `,` breaks a line.
+// `<…>` placeholders and `"…"` strings are passed through untouched.
+function formatRepr(input: string): string {
+	let out = "";
+	let depth = 0;
+	let inString = false;
+	let inAngle = false;
+	const pad = () => `\n${"  ".repeat(Math.max(0, depth))}`;
+
+	for (const c of input) {
+		if (inString) {
+			out += c;
+			if (c === '"') inString = false;
+		} else if (inAngle) {
+			out += c;
+			if (c === ">") inAngle = false;
+		} else if (c === '"') {
+			inString = true;
+			out += c;
+		} else if (c === "<") {
+			inAngle = true;
+			out += c;
+		} else if (c === "{" || c === "[") {
+			depth++;
+			out += c + pad();
+		} else if (c === "}" || c === "]") {
+			depth--;
+			out += pad() + c;
+		} else if (c === ",") {
+			out += c + pad();
+		} else if (c === " " && (out.endsWith("\n") || out.endsWith(" "))) {
+			// drop the original spacing that follows a break
+		} else {
+			out += c;
+		}
+	}
+
+	return out
+		.replace(/\{\s+\}/g, "{}")
+		.replace(/\[\s+\]/g, "[]")
+		.replace(/\(\s+\)/g, "()");
+}
+
 // Deserializes the tagged `raw` transaction bytes with the WASM ledger
-// (`@midnight-ntwrk/ledger-v8`) into a structured, human-readable view.
-// On-chain transactions are signed + proven + bound. POST — the raw
-// hex payload is far too large for a GET query string.
+// (`@midnight-ntwrk/ledger-v8`) and pretty-prints the ledger's own
+// structured rendering. On-chain transactions are signed + proven +
+// bound. POST — the raw hex is too large for a GET query string.
 export const decodeTransaction = createServerFn({ method: "POST" })
 	.inputValidator((rawHex: string) => rawHex)
 	.handler(async ({ data: rawHex }): Promise<DecodedTx | null> => {
@@ -73,13 +113,7 @@ export const decodeTransaction = createServerFn({ method: "POST" })
 		} catch {
 			return null;
 		}
-		const repr = tx.toString(true);
-		return {
-			identifiers: tx.identifiers().map(String),
-			intentCount: tx.intents?.size ?? 0,
-			hasGuaranteedOffer: tx.guaranteedOffer != null,
-			hasFallibleOffer: tx.fallibleOffer != null,
-			repr:
-				repr.length > 12_000 ? `${repr.slice(0, 12_000)}\n… (truncated)` : repr,
-		};
+		const raw = tx.toString(true);
+		const repr = raw.length > 20_000 ? `${raw.slice(0, 20_000)}…` : raw;
+		return { repr: formatRepr(repr) };
 	});

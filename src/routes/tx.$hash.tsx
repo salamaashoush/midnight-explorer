@@ -269,12 +269,9 @@ function DecodedTransaction({ raw }: { raw: string }) {
 					<code className="font-mono">@midnight-ntwrk/ledger-v8</code>).
 				</p>
 			</CardHeader>
-			<CardContent className="space-y-4">
+			<CardContent>
 				{isPending ? (
-					<div className="space-y-2">
-						<Skeleton className="h-7 w-72" />
-						<Skeleton className="h-40 w-full" />
-					</div>
+					<Skeleton className="h-64 w-full" />
 				) : error ? (
 					<p className="text-sm text-rose-400">
 						{error instanceof Error ? error.message : "Failed to decode"}
@@ -285,36 +282,9 @@ function DecodedTransaction({ raw }: { raw: string }) {
 						transaction.
 					</EmptyState>
 				) : (
-					<>
-						<div className="flex flex-wrap gap-2">
-							<Badge variant="secondary">
-								{data.intentCount} intent{data.intentCount === 1 ? "" : "s"}
-							</Badge>
-							{data.hasGuaranteedOffer ? (
-								<Badge
-									variant="outline"
-									className="border-primary/30 bg-primary/10 text-primary"
-								>
-									Guaranteed Zswap offer
-								</Badge>
-							) : null}
-							{data.hasFallibleOffer ? (
-								<Badge
-									variant="outline"
-									className="border-primary/30 bg-primary/10 text-primary"
-								>
-									Fallible Zswap offer
-								</Badge>
-							) : null}
-							<Badge variant="secondary">
-								{data.identifiers.length} identifier
-								{data.identifiers.length === 1 ? "" : "s"}
-							</Badge>
-						</div>
-						<CodeBlock className="max-h-[28rem] whitespace-pre-wrap">
-							{data.repr}
-						</CodeBlock>
-					</>
+					<CodeBlock className="max-h-[34rem] whitespace-pre">
+						{data.repr}
+					</CodeBlock>
 				)}
 			</CardContent>
 		</Card>
