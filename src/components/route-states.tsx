@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Compass } from "lucide-react";
+import { Compass, TriangleAlert } from "lucide-react";
 import { EmptyState } from "#/components/bits";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent } from "#/components/ui/card";
@@ -13,6 +13,34 @@ export function NotFound() {
 					That route does not exist on the explorer.
 				</EmptyState>
 				<div className="flex justify-center">
+					<Button asChild variant="outline" size="sm">
+						<Link to="/">Back to latest blocks</Link>
+					</Button>
+				</div>
+			</CardContent>
+		</Card>
+	);
+}
+
+// Rendered when a route loader / query throws — most often the active
+// network's indexer being unreachable.
+export function RouteError({
+	error,
+	reset,
+}: {
+	error: Error;
+	reset: () => void;
+}) {
+	return (
+		<Card>
+			<CardContent>
+				<EmptyState icon={TriangleAlert} title="Could not load this page">
+					{error.message}
+				</EmptyState>
+				<div className="flex justify-center gap-2">
+					<Button variant="outline" size="sm" onClick={() => reset()}>
+						Retry
+					</Button>
 					<Button asChild variant="outline" size="sm">
 						<Link to="/">Back to latest blocks</Link>
 					</Button>

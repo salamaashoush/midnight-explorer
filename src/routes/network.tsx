@@ -29,10 +29,12 @@ function NetworkPage() {
 	const { data } = useSuspenseQuery(networkQuery());
 	const epoch = data.currentEpochInfo;
 	const pct =
-		epoch.durationSeconds > 0
+		epoch && epoch.durationSeconds > 0
 			? Math.min(100, (epoch.elapsedSeconds / epoch.durationSeconds) * 100)
 			: 0;
-	const remaining = Math.max(0, epoch.durationSeconds - epoch.elapsedSeconds);
+	const remaining = epoch
+		? Math.max(0, epoch.durationSeconds - epoch.elapsedSeconds)
+		: 0;
 
 	return (
 		<div className="space-y-6">
@@ -42,17 +44,17 @@ function NetworkPage() {
 				<StatCard
 					icon={Clock3}
 					label="Current epoch"
-					value={`#${epoch.epochNo.toLocaleString()}`}
+					value={epoch ? `#${epoch.epochNo.toLocaleString()}` : "—"}
 				/>
 				<StatCard
 					icon={Server}
 					label="Epoch length"
-					value={`${Math.round(epoch.durationSeconds / 60)}m`}
+					value={epoch ? `${Math.round(epoch.durationSeconds / 60)}m` : "—"}
 				/>
 				<StatCard
 					icon={Users}
 					label="Stake pool operators"
-					value={data.spoCount.toLocaleString()}
+					value={data.spoCount != null ? data.spoCount.toLocaleString() : "—"}
 				/>
 				<StatCard
 					icon={FileText}
@@ -65,15 +67,24 @@ function NetworkPage() {
 				<CardHeader>
 					<CardTitle>Epoch progress</CardTitle>
 				</CardHeader>
-				<CardContent className="space-y-3">
-					<Progress value={pct} />
-					<div className="flex justify-between text-sm text-muted-foreground">
-						<span>{fmtDuration(epoch.elapsedSeconds)} elapsed</span>
-						<span className="font-medium text-foreground">
-							{pct.toFixed(1)}%
-						</span>
-						<span>{fmtDuration(remaining)} remaining</span>
-					</div>
+				<CardContent>
+					{epoch ? (
+						<div className="space-y-3">
+							<Progress value={pct} />
+							<div className="flex justify-between text-sm text-muted-foreground">
+								<span>{fmtDuration(epoch.elapsedSeconds)} elapsed</span>
+								<span className="font-medium text-foreground">
+									{pct.toFixed(1)}%
+								</span>
+								<span>{fmtDuration(remaining)} remaining</span>
+							</div>
+						</div>
+					) : (
+						<EmptyState title="Epoch data not available on this network">
+							Partner-chain epoch and stake-pool data is not exposed by this
+							indexer (e.g. a local devnet).
+						</EmptyState>
+					)}
 				</CardContent>
 			</Card>
 

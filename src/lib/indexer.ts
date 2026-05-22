@@ -10,12 +10,23 @@ async function gql<T>(
 	query: string,
 	variables?: Record<string, unknown>,
 ): Promise<T> {
-	const res = await fetch(activeNetwork().indexerHttp, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ query, variables }),
-	});
-	if (!res.ok) throw new Error(`Indexer HTTP ${res.status}`);
+	const net = activeNetwork();
+	let res: Response;
+	try {
+		res = await fetch(net.indexerHttp, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ query, variables }),
+		});
+	} catch {
+		throw new Error(
+			`Could not reach the ${net.label} indexer at ${net.indexerHttp}. ` +
+				(net.id === "local"
+					? "Is your local Midnight stack running?"
+					: "The network may be down."),
+		);
+	}
+	if (!res.ok) throw new Error(`Indexer HTTP ${res.status} (${net.label})`);
 	const json = (await res.json()) as GqlResponse<T>;
 	if (json.errors?.length)
 		throw new Error(json.errors.map((e) => e.message).join("; "));
@@ -244,29 +255,53 @@ export interface TermsChange {
 	url: string;
 }
 
+export interface EpochInfo {
+	epochNo: number;
+	durationSeconds: number;
+	elapsedSeconds: number;
+}
+
 export interface NetworkInfo {
-	currentEpochInfo: {
-		epochNo: number;
-		durationSeconds: number;
-		elapsedSeconds: number;
-	};
-	spoCount: number;
+	// Cardano partner-chain data — absent on a local standalone devnet.
+	currentEpochInfo: EpochInfo | null;
+	spoCount: number | null;
 	dParameterHistory: DParameterChange[];
 	termsAndConditionsHistory: TermsChange[];
 }
 
+// Epoch / SPO data is partner-chain-specific and errors on local
+// devnets, so it is fetched separately and allowed to be absent.
 export async function fetchNetwork(): Promise<NetworkInfo> {
-	return gql<NetworkInfo>(
-		`{
-      currentEpochInfo { epochNo durationSeconds elapsedSeconds }
-      spoCount
-      dParameterHistory {
-        blockHeight timestamp
-        numPermissionedCandidates numRegisteredCandidates
-      }
-      termsAndConditionsHistory { blockHeight timestamp hash url }
-    }`,
-	);
+	const [epoch, governance] = await Promise.allSettled([
+		gql<{ currentEpochInfo: EpochInfo; spoCount: number }>(
+			`{ currentEpochInfo { epochNo durationSeconds elapsedSeconds } spoCount }`,
+		),
+		gql<{
+			dParameterHistory: DParameterChange[];
+			termsAndConditionsHistory: TermsChange[];
+		}>(
+			`{
+        dParameterHistory {
+          blockHeight timestamp
+          numPermissionedCandidates numRegisteredCandidates
+        }
+        termsAndConditionsHistory { blockHeight timestamp hash url }
+      }`,
+		),
+	]);
+
+	const gov =
+		governance.status === "fulfilled"
+			? governance.value
+			: { dParameterHistory: [], termsAndConditionsHistory: [] };
+
+	return {
+		currentEpochInfo:
+			epoch.status === "fulfilled" ? epoch.value.currentEpochInfo : null,
+		spoCount: epoch.status === "fulfilled" ? epoch.value.spoCount : null,
+		dParameterHistory: gov.dParameterHistory,
+		termsAndConditionsHistory: gov.termsAndConditionsHistory,
+	};
 }
 
 export const networkQuery = () =>
