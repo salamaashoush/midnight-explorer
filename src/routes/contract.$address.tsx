@@ -232,7 +232,7 @@ function DecodedState({ address }: { address: string }) {
 								<div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
 									Ledger state
 								</div>
-								<CodeBlock className="max-h-96 whitespace-pre-wrap">
+								<CodeBlock className="max-h-[34rem] whitespace-pre">
 									{data.stateRepr}
 								</CodeBlock>
 							</div>

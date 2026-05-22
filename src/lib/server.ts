@@ -35,8 +35,9 @@ export const getContractState = createServerFn({ method: "GET" })
 		try {
 			const repr = (state as { toString?: () => string }).toString?.();
 			if (repr && repr !== "[object Object]") {
-				stateRepr =
-					repr.length > 8000 ? `${repr.slice(0, 8000)}\n… (truncated)` : repr;
+				stateRepr = formatRepr(
+					repr.length > 16_000 ? `${repr.slice(0, 16_000)}…` : repr,
+				);
 			}
 		} catch {
 			/* toString unavailable */
@@ -80,8 +81,10 @@ function formatRepr(input: string): string {
 			out += pad() + c;
 		} else if (c === ",") {
 			out += c + pad();
-		} else if (c === " " && (out.endsWith("\n") || out.endsWith(" "))) {
-			// drop the original spacing that follows a break
+		} else if (c === " " || c === "\n" || c === "\r" || c === "\t") {
+			// collapse all original whitespace — layout is fully redone
+			const last = out[out.length - 1];
+			if (last && last !== " " && last !== "\n") out += " ";
 		} else {
 			out += c;
 		}
